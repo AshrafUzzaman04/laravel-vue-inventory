@@ -9,12 +9,13 @@
                 <div class="card-body">
                     <p class="login-box-msg">Sign in to start your session</p>
 
-                    <form action="../../index3.html" method="post">
+                    <form @submit.prevent="login">
                         <div class="input-group mb-3">
                             <input
                                 type="email"
                                 class="form-control"
                                 placeholder="Email"
+                                v-model="form.email"
                             />
                             <div class="input-group-append">
                                 <div class="input-group-text">
@@ -27,6 +28,7 @@
                                 type="password"
                                 class="form-control"
                                 placeholder="Password"
+                                v-model="form.password"
                             />
                             <div class="input-group-append">
                                 <div class="input-group-text">
@@ -89,3 +91,24 @@
         </div>
     </div>
 </template>
+
+<script>
+export default {
+    data() {
+        return {
+            form: {
+                email: null,
+                password: null,
+            },
+        };
+    },
+    methods: {
+        login() {
+            axios
+                .post("/api/auth/login", this.form)
+                .then((res) => console.log(res.data))
+                .catch((error) => console.log(error.response.data));
+        },
+    },
+};
+</script>

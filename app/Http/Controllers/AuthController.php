@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{Auth, Hash};
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class AuthController extends Controller
 {
@@ -15,7 +16,7 @@ class AuthController extends Controller
      */
     public function __construct()
     {
-        $this->middleware('auth:api', ['except' => ['login', "register"]]);
+        $this->middleware('jwt', ['except' => ['login', 'register']]);
     }
 
     /**
@@ -29,7 +30,7 @@ class AuthController extends Controller
     {
         $credentials = $request->only('email', 'password');
 
-        if ($token = $this->guard()->attempt($credentials)) {
+        if ($token = JWTAuth::attempt($credentials)) { // Corrected the use of JWTAuth
             return $this->respondWithToken($token);
         }
 
@@ -65,7 +66,7 @@ class AuthController extends Controller
      */
     public function refresh()
     {
-        return $this->respondWithToken($this->guard()->refresh());
+        return $this->respondWithToken(JWTAuth::refresh()); // Corrected the use of JWTAuth
     }
 
     /**
@@ -80,7 +81,10 @@ class AuthController extends Controller
         return response()->json([
             'access_token' => $token,
             'token_type' => 'bearer',
-            'expires_in' => $this->guard()->factory()->getTTL() * 60
+            'expires_in' => JWTAuth::factory()->getTTL() * 60,
+            "user" => Auth::user()->name,
+            "email" => Auth::user()->email,
+            "user_id" => Auth::user()->id,
         ]);
     }
 
@@ -98,9 +102,8 @@ class AuthController extends Controller
     {
         $request->validate([
             "name" => "required|min:3",
-            "email" => "required|email|unique:Users,email",
+            "email" => "required|email|unique:users,email", // Corrected the table name to "users"
             "password" => "required|confirmed",
-            "password_confirmation" => "required"
         ]);
 
         User::create([
@@ -108,7 +111,6 @@ class AuthController extends Controller
             "email" => $request["email"],
             "password" => Hash::make($request["password"]),
         ]);
-
 
         return $this->login($request);
     }
